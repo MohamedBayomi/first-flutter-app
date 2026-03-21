@@ -1,43 +1,29 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import '../config/mongodb_config.dart';
 
 class MongoDbService {
-  static const String _counterKey = 'number of clicks';
+  /// Gets the base URL for API calls.
+  /// In web (browser), uses relative paths to hit Vercel API routes.
+  /// In non-web (mobile/desktop), uses the full Vercel deployment URL.
+  static String get _baseUrl {
+    if (kIsWeb) {
+      return ''; // relative path works on same domain
+    }
+    return MongoDbConfig.apiBaseUrl;
+  }
 
-  static Map<String, String> get _headers => {
-        'Content-Type': 'application/json',
-        'api-key': MongoDbConfig.apiKey,
-      };
-
-  static Map<String, String> get _baseBody => {
-        'dataSource': MongoDbConfig.dataSource,
-        'database': MongoDbConfig.database,
-        'collection': MongoDbConfig.collection,
-      };
-
-  /// Fetches the current click count from MongoDB.
-  /// Returns 0 if the document doesn't exist yet.
+  /// Fetches the current click count.
   static Future<int> getClickCount() async {
-    final url = Uri.parse('${MongoDbConfig.dataApiUrl}/action/findOne');
-
-    final body = {
-      ..._baseBody,
-      'filter': {'key': _counterKey},
-    };
-
     try {
-      final response = await http.post(
-        url,
-        headers: _headers,
-        body: jsonEncode(body),
+      final response = await http.get(
+        Uri.parse('$_baseUrl/api/get-clicks'),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['document'] != null) {
-          return data['document']['value'] as int? ?? 0;
-        }
+        return data['value'] as int? ?? 0;
       }
       return 0;
     } catch (e) {
@@ -45,32 +31,16 @@ class MongoDbService {
     }
   }
 
-  /// Increments the click count in MongoDB by 1 using upsert.
-  /// Creates the document if it doesn't exist.
-  /// Returns the new count.
+  /// Increments the click count by 1 and returns the new value.
   static Future<int> incrementClickCount() async {
-    final url = Uri.parse('${MongoDbConfig.dataApiUrl}/action/updateOne');
-
-    final body = {
-      ..._baseBody,
-      'filter': {'key': _counterKey},
-      'update': {
-        '\$inc': {'value': 1},
-        '\$setOnInsert': {'key': _counterKey},
-      },
-      'upsert': true,
-    };
-
     try {
       final response = await http.post(
-        url,
-        headers: _headers,
-        body: jsonEncode(body),
+        Uri.parse('$_baseUrl/api/increment-clicks'),
       );
 
       if (response.statusCode == 200) {
-        // After incrementing, fetch the updated count
-        return await getClickCount();
+        final data = jsonDecode(response.body);
+        return data['value'] as int? ?? -1;
       }
       return -1;
     } catch (e) {
