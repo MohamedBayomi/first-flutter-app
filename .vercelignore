@@ -1,0 +1,5 @@
+api/node_modules
+.dart_tool
+build
+.vs
+android/build
