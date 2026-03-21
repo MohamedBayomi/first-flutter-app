@@ -1,11 +1,6 @@
 {
   "buildCommand": "flutter build web --release",
   "outputDirectory": "build/web",
-  "functions": {
-    "api/*.js": {
-      "runtime": "nodejs20.x"
-    }
-  },
   "rewrites": [
     { "source": "/api/get-clicks", "destination": "/api/get-clicks" },
     { "source": "/api/increment-clicks", "destination": "/api/increment-clicks" },
