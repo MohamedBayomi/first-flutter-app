@@ -1,4 +1,5 @@
 {
+  "installCommand": "cd api && npm install",
   "outputDirectory": "build/web",
   "rewrites": [
     { "source": "/api/get-clicks", "destination": "/api/get-clicks" },

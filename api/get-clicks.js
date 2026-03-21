@@ -1,10 +1,10 @@
-import clientPromise from "./_mongodb.js";
+const clientPromise = require("./_mongodb.js");
 
 const DB_NAME = process.env.MONGO_DATABASE || "flutter_app";
 const COLLECTION = process.env.MONGO_COLLECTION || "counters";
 const COUNTER_KEY = "number of clicks";
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -22,4 +22,4 @@ export default async function handler(req, res) {
     console.error("get-clicks error:", error);
     return res.status(500).json({ error: "Failed to fetch click count" });
   }
-}
+};
