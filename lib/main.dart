@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'services/mongodb_service.dart';
 
@@ -57,27 +58,51 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   bool _loading = true;
+  bool _updating = false;
+  Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
     _loadCounter();
+    // Poll MongoDB every 2 seconds for real-time updates across all users
+    _pollTimer = Timer.periodic(const Duration(seconds: 2), (_) => _pollCounter());
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadCounter() async {
     final count = await MongoDbService.getClickCount();
-    setState(() {
-      _counter = count;
-      _loading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _counter = count;
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _pollCounter() async {
+    if (_updating) return; // Skip poll while an increment is in progress
+    final count = await MongoDbService.getClickCount();
+    if (mounted && count >= 0) {
+      setState(() {
+        _counter = count;
+      });
+    }
   }
 
   void _incrementCounter() async {
+    _updating = true;
     setState(() {
-      _counter++;
+      _counter++; // Optimistic update
     });
     final updatedCount = await MongoDbService.incrementClickCount();
-    if (updatedCount >= 0) {
+    _updating = false;
+    if (mounted && updatedCount >= 0) {
       setState(() {
         _counter = updatedCount;
       });
@@ -121,13 +146,28 @@ class _MyHomePageState extends State<MyHomePage> {
           // wireframe for each widget.
           mainAxisAlignment: .center,
           children: [
-            const Text('You have pushed the button this many times:'),
+            const Text(
+              'Global Click Counter',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 8),
+            const Text('Everyone around the world shares this counter:'),
+            const SizedBox(height: 16),
             _loading
                 ? const CircularProgressIndicator()
                 : Text(
                     '$_counter',
-                    style: Theme.of(context).textTheme.headlineMedium,
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
+            const SizedBox(height: 8),
+            Text(
+              'Updates every 2 seconds',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.grey,
+                  ),
+            ),
           ],
         ),
       ),
