@@ -1,35 +1,25 @@
-const MONGO_API_URL = process.env.MONGO_API_URL;
-const MONGO_API_KEY = process.env.MONGO_API_KEY;
-const MONGO_DATA_SOURCE = process.env.MONGO_DATA_SOURCE || 'Cluster0';
-const MONGO_DATABASE = process.env.MONGO_DATABASE || 'flutter_app';
-const MONGO_COLLECTION = process.env.MONGO_COLLECTION || 'counters';
+import clientPromise from "./_mongodb.js";
 
-const COUNTER_KEY = 'number of clicks';
+const DB_NAME = process.env.MONGO_DATABASE || "flutter_app";
+const COLLECTION = process.env.MONGO_COLLECTION || "counters";
+const COUNTER_KEY = "number of clicks";
 
 export default async function handler(req, res) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
-    const response = await fetch(`${MONGO_API_URL}/action/findOne`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'api-key': MONGO_API_KEY,
-      },
-      body: JSON.stringify({
-        dataSource: MONGO_DATA_SOURCE,
-        database: MONGO_DATABASE,
-        collection: MONGO_COLLECTION,
-        filter: { key: COUNTER_KEY },
-      }),
-    });
+    const client = await clientPromise;
+    const db = client.db(DB_NAME);
+    const collection = db.collection(COLLECTION);
 
-    const data = await response.json();
-    const value = data.document?.value ?? 0;
+    const doc = await collection.findOne({ key: COUNTER_KEY });
+    const value = doc?.value ?? 0;
+
     return res.status(200).json({ value });
   } catch (error) {
-    return res.status(500).json({ error: 'Failed to fetch click count' });
+    console.error("get-clicks error:", error);
+    return res.status(500).json({ error: "Failed to fetch click count" });
   }
 }
