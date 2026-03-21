@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'services/mongodb_service.dart';
 
 void main() {
   runApp(const MyApp());
@@ -55,16 +56,32 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  bool _loading = true;
 
-  void _incrementCounter() {
+  @override
+  void initState() {
+    super.initState();
+    _loadCounter();
+  }
+
+  Future<void> _loadCounter() async {
+    final count = await MongoDbService.getClickCount();
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
+      _counter = count;
+      _loading = false;
+    });
+  }
+
+  void _incrementCounter() async {
+    setState(() {
       _counter++;
     });
+    final updatedCount = await MongoDbService.incrementClickCount();
+    if (updatedCount >= 0) {
+      setState(() {
+        _counter = updatedCount;
+      });
+    }
   }
 
   @override
@@ -105,10 +122,12 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: .center,
           children: [
             const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
+            _loading
+                ? const CircularProgressIndicator()
+                : Text(
+                    '$_counter',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
           ],
         ),
       ),
