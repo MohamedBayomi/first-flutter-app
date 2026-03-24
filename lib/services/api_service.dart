@@ -1,20 +1,11 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
-import '../config/mongodb_config.dart';
+import '../config/api_config.dart';
 
-class MongoDbService {
-  /// Gets the base URL for API calls.
-  /// In web (browser), uses relative paths to hit Vercel API routes.
-  /// In non-web (mobile/desktop), uses the full Vercel deployment URL.
-  static String get _baseUrl {
-    if (kIsWeb) {
-      return ''; // relative path works on same domain
-    }
-    return MongoDbConfig.apiBaseUrl;
-  }
+class ApiService {
+  static String get _baseUrl => ApiConfig.apiBaseUrl;
 
-  /// Fetches the current click count.
+  /// Fetches the current click count from the backend.
   static Future<int> getClickCount() async {
     try {
       final response = await http.get(

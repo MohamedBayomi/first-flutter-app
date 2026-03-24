@@ -1,6 +1,0 @@
-{
-  "private": true,
-  "dependencies": {
-    "mongodb": "^6.19.0"
-  }
-}

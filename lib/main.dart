@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'services/mongodb_service.dart';
+import 'services/api_service.dart';
 
 void main() {
   runApp(const MyApp());
@@ -76,7 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _loadCounter() async {
-    final count = await MongoDbService.getClickCount();
+    final count = await ApiService.getClickCount();
     if (mounted) {
       setState(() {
         _counter = count;
@@ -87,7 +87,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _pollCounter() async {
     if (_updating) return; // Skip poll while an increment is in progress
-    final count = await MongoDbService.getClickCount();
+    final count = await ApiService.getClickCount();
     if (mounted && count >= 0) {
       setState(() {
         _counter = count;
@@ -100,7 +100,7 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _counter++; // Optimistic update
     });
-    final updatedCount = await MongoDbService.incrementClickCount();
+    final updatedCount = await ApiService.incrementClickCount();
     _updating = false;
     if (mounted && updatedCount >= 0) {
       setState(() {
